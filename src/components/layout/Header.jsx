@@ -13,22 +13,30 @@ import {
   Box,
   Avatar,
   Divider,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ShoppingCart,
   Favorite,
   AccountCircle,
   Menu as MenuIcon,
+  LocalShipping,
+  Dashboard,
+  Logout,
 } from '@mui/icons-material';
 import { logout } from '../../store/slices/authSlice';
 
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);
 
-  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { items: cartItems } = useSelector((state) => state.cart);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
@@ -82,29 +90,43 @@ const Header = () => {
       keepMounted
     >
       {isAuthenticated ? (
-        [
-          <MenuItem key="profile-menu" component={RouterLink} to="/profile" onClick={handleMenuClose}>
+        <>
+          <MenuItem component={RouterLink} to="/profile" onClick={handleMenuClose}>
             <IconButton size="large" color="inherit">
               <AccountCircle />
             </IconButton>
             Profile
-          </MenuItem>,
-          <MenuItem key="orders-menu" component={RouterLink} to="/orders" onClick={handleMenuClose}>
+          </MenuItem>
+          <MenuItem component={RouterLink} to="/orders" onClick={handleMenuClose}>
+            <IconButton size="large" color="inherit">
+              <LocalShipping />
+            </IconButton>
             Orders
-          </MenuItem>,
-          <MenuItem key="logout-menu" onClick={handleLogout}>
+          </MenuItem>
+          {user?.role === 'admin' && (
+            <MenuItem component={RouterLink} to="/admin" onClick={handleMenuClose}>
+              <IconButton size="large" color="inherit">
+                <Dashboard />
+              </IconButton>
+              Admin Dashboard
+            </MenuItem>
+          )}
+          <MenuItem onClick={handleLogout}>
+            <IconButton size="large" color="inherit">
+              <Logout />
+            </IconButton>
             Logout
           </MenuItem>
-        ]
+        </>
       ) : (
-        [
-          <MenuItem key="login-menu" component={RouterLink} to="/login" onClick={handleMenuClose}>
+        <>
+          <MenuItem component={RouterLink} to="/login" onClick={handleMenuClose}>
             Login
-          </MenuItem>,
-          <MenuItem key="register-menu" component={RouterLink} to="/register" onClick={handleMenuClose}>
+          </MenuItem>
+          <MenuItem component={RouterLink} to="/register" onClick={handleMenuClose}>
             Register
           </MenuItem>
-        ]
+        </>
       )}
     </Menu>
   );
@@ -112,15 +134,16 @@ const Header = () => {
   return (
     <AppBar position="fixed">
       <Toolbar>
-        <IconButton
-          edge="start"
-          color="inherit"
-          aria-label="menu"
-          sx={{ mr: 2, display: { sm: 'none' } }}
-          onClick={handleMobileMenuOpen}
-        >
-          <MenuIcon />
-        </IconButton>
+        {isMobile && (
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={handleMobileMenuOpen}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
         
         <Typography
           variant="h6"
@@ -130,18 +153,20 @@ const Header = () => {
             flexGrow: 1,
             textDecoration: 'none',
             color: 'inherit',
+            fontSize: { xs: '1.1rem', sm: '1.25rem' },
           }}
         >
           E-Commerce
         </Typography>
 
-        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
           {isAuthenticated ? (
             <>
               <IconButton
                 color="inherit"
                 component={RouterLink}
                 to="/wishlist"
+                size={isMobile ? "small" : "medium"}
               >
                 <Badge badgeContent={wishlistItems.length} color="error">
                   <Favorite />
@@ -151,6 +176,7 @@ const Header = () => {
                 color="inherit"
                 component={RouterLink}
                 to="/cart"
+                size={isMobile ? "small" : "medium"}
               >
                 <Badge badgeContent={cartItems.length} color="error">
                   <ShoppingCart />
@@ -160,10 +186,16 @@ const Header = () => {
                 edge="end"
                 color="inherit"
                 onClick={handleProfileMenuOpen}
-                sx={{ ml: 1 }}
+                size={isMobile ? "small" : "medium"}
               >
                 {user?.avatar ? (
-                  <Avatar src={user.avatar} sx={{ width: 32, height: 32 }} />
+                  <Avatar 
+                    src={user.avatar} 
+                    sx={{ 
+                      width: isMobile ? 24 : 32, 
+                      height: isMobile ? 24 : 32 
+                    }} 
+                  />
                 ) : (
                   <AccountCircle />
                 )}
@@ -171,22 +203,24 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/login"
-                sx={{ ml: 1 }}
-              >
-                Login
-              </Button>
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/register"
-                sx={{ ml: 1 }}
-              >
-                Register
-              </Button>
+              {!isMobile && (
+                <>
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/login"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/register"
+                  >
+                    Register
+                  </Button>
+                </>
+              )}
             </>
           )}
         </Box>
