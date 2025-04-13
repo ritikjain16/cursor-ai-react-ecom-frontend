@@ -198,6 +198,7 @@ const Home = () => {
                   top: 8,
                   right: 8,
                   bgcolor: 'background.paper',
+                  zIndex:1
                 }}
                 onClick={() => toggleWishlist(product._id)}
               >

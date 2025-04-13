@@ -13,30 +13,22 @@ import {
   Box,
   Avatar,
   Divider,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   ShoppingCart,
   Favorite,
   AccountCircle,
   Menu as MenuIcon,
-  LocalShipping,
-  Dashboard,
-  Logout,
 } from '@mui/icons-material';
 import { logout } from '../../store/slices/authSlice';
 
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);
 
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
   const { items: cartItems } = useSelector((state) => state.cart);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
@@ -90,43 +82,34 @@ const Header = () => {
       keepMounted
     >
       {isAuthenticated ? (
-        <>
-          <MenuItem component={RouterLink} to="/profile" onClick={handleMenuClose}>
+        [
+          user?.role === 'admin' && (
+            <MenuItem key="admin-menu" component={RouterLink} to="/admin" onClick={handleMenuClose}>
+              Admin Dashboard
+            </MenuItem>
+          ),
+          <MenuItem key="profile-menu" component={RouterLink} to="/profile" onClick={handleMenuClose}>
             <IconButton size="large" color="inherit">
               <AccountCircle />
             </IconButton>
             Profile
-          </MenuItem>
-          <MenuItem component={RouterLink} to="/orders" onClick={handleMenuClose}>
-            <IconButton size="large" color="inherit">
-              <LocalShipping />
-            </IconButton>
+          </MenuItem>,
+          <MenuItem key="orders-menu" component={RouterLink} to="/orders" onClick={handleMenuClose}>
             Orders
-          </MenuItem>
-          {user?.role === 'admin' && (
-            <MenuItem component={RouterLink} to="/admin" onClick={handleMenuClose}>
-              <IconButton size="large" color="inherit">
-                <Dashboard />
-              </IconButton>
-              Admin Dashboard
-            </MenuItem>
-          )}
-          <MenuItem onClick={handleLogout}>
-            <IconButton size="large" color="inherit">
-              <Logout />
-            </IconButton>
+          </MenuItem>,
+          <MenuItem key="logout-menu" onClick={handleLogout}>
             Logout
           </MenuItem>
-        </>
+        ]
       ) : (
-        <>
-          <MenuItem component={RouterLink} to="/login" onClick={handleMenuClose}>
+        [
+          <MenuItem key="login-menu" component={RouterLink} to="/login" onClick={handleMenuClose}>
             Login
-          </MenuItem>
-          <MenuItem component={RouterLink} to="/register" onClick={handleMenuClose}>
+          </MenuItem>,
+          <MenuItem key="register-menu" component={RouterLink} to="/register" onClick={handleMenuClose}>
             Register
           </MenuItem>
-        </>
+        ]
       )}
     </Menu>
   );
@@ -134,16 +117,15 @@ const Header = () => {
   return (
     <AppBar position="fixed">
       <Toolbar>
-        {isMobile && (
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={handleMobileMenuOpen}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
+        <IconButton
+          edge="start"
+          color="inherit"
+          aria-label="menu"
+          sx={{ mr: 2, display: { sm: 'none' } }}
+          onClick={handleMobileMenuOpen}
+        >
+          <MenuIcon />
+        </IconButton>
         
         <Typography
           variant="h6"
@@ -153,74 +135,68 @@ const Header = () => {
             flexGrow: 1,
             textDecoration: 'none',
             color: 'inherit',
-            fontSize: { xs: '1.1rem', sm: '1.25rem' },
           }}
         >
           E-Commerce
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+        {isAuthenticated && (
+          <Box sx={{ display: 'flex', alignItems: 'center', mr: { xs: 1, sm: 2 } }}>
+            <IconButton
+              color="inherit"
+              component={RouterLink}
+              to="/wishlist"
+              size={window.innerWidth < 600 ? "small" : "medium"}
+            >
+              <Badge badgeContent={wishlistItems.length} color="error">
+                <Favorite />
+              </Badge>
+            </IconButton>
+            <IconButton
+              color="inherit"
+              component={RouterLink}
+              to="/cart"
+              size={window.innerWidth < 600 ? "small" : "medium"}
+            >
+              <Badge badgeContent={cartItems.length} color="error">
+                <ShoppingCart />
+              </Badge>
+            </IconButton>
+          </Box>
+        )}
+
+        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
           {isAuthenticated ? (
-            <>
-              <IconButton
-                color="inherit"
-                component={RouterLink}
-                to="/wishlist"
-                size={isMobile ? "small" : "medium"}
-              >
-                <Badge badgeContent={wishlistItems.length} color="error">
-                  <Favorite />
-                </Badge>
-              </IconButton>
-              <IconButton
-                color="inherit"
-                component={RouterLink}
-                to="/cart"
-                size={isMobile ? "small" : "medium"}
-              >
-                <Badge badgeContent={cartItems.length} color="error">
-                  <ShoppingCart />
-                </Badge>
-              </IconButton>
-              <IconButton
-                edge="end"
-                color="inherit"
-                onClick={handleProfileMenuOpen}
-                size={isMobile ? "small" : "medium"}
-              >
-                {user?.avatar ? (
-                  <Avatar 
-                    src={user.avatar} 
-                    sx={{ 
-                      width: isMobile ? 24 : 32, 
-                      height: isMobile ? 24 : 32 
-                    }} 
-                  />
-                ) : (
-                  <AccountCircle />
-                )}
-              </IconButton>
-            </>
+            <IconButton
+              edge="end"
+              color="inherit"
+              onClick={handleProfileMenuOpen}
+              sx={{ ml: 1 }}
+            >
+              {user?.avatar ? (
+                <Avatar src={user.avatar} sx={{ width: 32, height: 32 }} />
+              ) : (
+                <AccountCircle />
+              )}
+            </IconButton>
           ) : (
             <>
-              {!isMobile && (
-                <>
-                  <Button
-                    color="inherit"
-                    component={RouterLink}
-                    to="/login"
-                  >
-                    Login
-                  </Button>
-                  <Button
-                    color="inherit"
-                    component={RouterLink}
-                    to="/register"
-                  >
-                    Register
-                  </Button>
-                </>
-              )}
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/login"
+                sx={{ ml: 1 }}
+              >
+                Login
+              </Button>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/register"
+                sx={{ ml: 1 }}
+              >
+                Register
+              </Button>
             </>
           )}
         </Box>
